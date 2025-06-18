@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
 
 const PolyhedraVertex = () => {
   const [selectedShape, setSelectedShape] = useState('cube');
@@ -14,7 +13,11 @@ const PolyhedraVertex = () => {
   const svgRef = useRef(null);
 
   const shapeInfo = {
-    'cube': { name: 'Cube', plural: 'Cubes', vertices: 8 }
+    'tetrahedron': { name: 'Tetrahedron', plural: 'Tetrahedra', vertices: 4 },
+    'cube': { name: 'Cube', plural: 'Cubes', vertices: 8 },
+    'regular-octahedron': { name: 'Octahedron', plural: 'Octahedra', vertices: 6 },
+    'regular-dodecahedron': { name: 'Dodecahedron', plural: 'Dodecahedra', vertices: 20 },
+    'regular-icosahedron': { name: 'Icosahedron', plural: 'Icosahedra', vertices: 12 }
   };
 
   const shapes = {
@@ -62,7 +65,7 @@ const PolyhedraVertex = () => {
         [0.618034, 0, -1.618034], [-0.618034, 0, -1.618034],
         [1.618034, 0.618034, 0], [1.618034, -0.618034, 0],
         [-1.618034, 0.618034, 0], [-1.618034, -0.618034, 0]
-      ].map(v => v.map(c => c * 0.4)),
+      ].map(v => v.map(c => c * 0.6)),
       edges: [
         [0, 16], [0, 12], [0, 8], [1, 16], [1, 14], [1, 9],
         [2, 17], [2, 12], [2, 10], [3, 17], [3, 14], [3, 11],
@@ -177,7 +180,7 @@ const PolyhedraVertex = () => {
     
     return {
       x: rotatedPoint[0] * scale * factor + 200,
-      y: rotatedPoint[1] * scale * factor + 200,
+      y: rotatedPoint[1] * scale * factor + 150,
       z: rotatedPoint[2]
     };
   };
@@ -266,8 +269,10 @@ const PolyhedraVertex = () => {
       <svg 
         ref={svgRef}
         width="400" 
-        height="400" 
-        className="bg-sky-50 rounded-lg cursor-move shadow-md"
+        height="300" 
+        viewBox="0 0 400 300"
+        className="w-full h-full select-none"
+        style={{ touchAction: 'none' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -298,79 +303,157 @@ const PolyhedraVertex = () => {
             onClick={(e) => handleVertexClick(index, e)}
           />
         ))}
+        <text
+          x="200"
+          y="280"
+          textAnchor="middle"
+          className="text-sm fill-gray-600"
+          style={{ fontSize: '12px' }}
+        >
+          Drag to rotate the shape and click on the vertices to highlight them
+        </text>
       </svg>
     );
   };
 
   return (
-    <div className="bg-gray-100 p-8 min-h-screen">
-      <Card className="w-full max-w-4xl mx-auto shadow-md bg-white">
-        <CardHeader className="bg-sky-100 text-sky-800">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-3xl font-bold">Polyhedron Vertex Explorer</CardTitle>
+    <>
+      <style>{`
+        @property --r {
+          syntax: '<angle>';
+          inherits: false;
+          initial-value: 0deg;
+        }
+
+        .glow-button { 
+          min-width: auto; 
+          height: auto; 
+          position: relative; 
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+          transition: all .3s ease;
+          padding: 7px;
+        }
+
+        .glow-button::before {
+          content: "";
+          display: block;
+          position: absolute;
+          background: white;
+          inset: 2px;
+          border-radius: 4px;
+          z-index: -2;
+        }
+
+        .simple-glow {
+          background: conic-gradient(
+            from var(--r),
+            transparent 0%,
+            rgb(0, 255, 132) 2%,
+            rgb(0, 214, 111) 8%,
+            rgb(0, 174, 90) 12%,
+            rgb(0, 133, 69) 14%,
+            transparent 15%
+          );
+          animation: rotating 3s linear infinite;
+          transition: animation 0.3s ease;
+        }
+
+        .simple-glow.stopped {
+          animation: none;
+          background: none;
+        }
+
+        @keyframes rotating {
+          0% {
+            --r: 0deg;
+          }
+          100% {
+            --r: 360deg;
+          }
+        }
+      `}</style>
+      <div className="w-[500px] h-auto mx-auto mt-5 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.05)] bg-white rounded-lg overflow-hidden select-none">
+        <div className="p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-[#5750E3] text-sm font-medium select-none">Practicing Polyhedron Vertices</h2>
+            <button
+              onClick={() => {
+                setSelectedShape('cube');
+                setSelectedVertices(new Set());
+                setUserAnswer('');
+                setIsCorrect(false);
+                setHasError(false);
+              }}
+              className="text-gray-500 hover:text-gray-700 text-sm px-3 py-1 rounded border border-gray-300 hover:border-gray-400 transition-colors"
+            >
+              Reset
+            </button>
           </div>
-          <CardDescription className="text-sky-700 text-lg">Find out what the vertices of a shape are!</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-6">
-          <Alert className="bg-blue-50 border-blue-100">
-            <AlertTitle className="text-blue-700">What is a Vertex?</AlertTitle>
-            <AlertDescription className="text-blue-600">
-              A vertex of a polyhedron is a point where three or more edges meet. You can think of it as a corner of the shape. For example, in a cube, each of the eight corners is a vertex. Try identifying all of the vertices of the following shapes!
-            </AlertDescription>
-          </Alert>
-          <div className="space-y-6">
-            <div className="flex gap-3 flex-wrap justify-center">
-              {[
-                ['cube', 'Cube', 8]
-              ].map(([shape, displayName]) => (
-                <button
-                  key={shape}
-                  onClick={() => setSelectedShape(shape)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    selectedShape === shape
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-sky-100 hover:bg-sky-200 text-sky-700'
-                  }`}
-                >
-                  {displayName}
-                </button>
-              ))}
+          <div className="space-y-4">
+            <div className="relative">
+              <div className="flex">
+                <div className="flex flex-col space-y-2 mr-4">
+                  {Object.entries(shapeInfo).map(([shape, info]) => (
+                    <button
+                      key={shape}
+                      onClick={() => setSelectedShape(shape)}
+                      className={`px-4 py-3 rounded-lg transition-colors text-sm ${
+                        selectedShape === shape
+                          ? 'bg-[#008545] text-white'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {info.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1">
+                  <div className="border border-gray-200 rounded-lg flex-1 min-w-[300px] min-h-[250px] w-full">
+                    {renderPolyhedron()}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex justify-center">
-              {renderPolyhedron()}
-            </div>
-            <div className="flex justify-center items-center space-x-4">
+
+            <div className="flex flex-col items-center space-y-3">
               {!isCorrect ? (
                 <>
-                  <p className="text-sky-700">How many vertices do {shapeInfo[selectedShape].plural} have?</p>
-                  <input
-                    type="number"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    className={`w-20 px-3 py-2 border rounded-lg ${
-                      hasError ? 'border-red-500 focus:ring-red-500' : 'border-sky-200 focus:ring-sky-500'
-                    } focus:outline-none focus:ring-2`}
-                  />
-                  <button
-                    onClick={handleAnswerSubmit}
-                    className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
-                  >
-                    Check
-                  </button>
+                  <p className="text-gray-700">How many vertices do {shapeInfo[selectedShape].plural} have?</p>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="number"
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      placeholder="Enter answer"
+                      className={`w-40 px-3 py-2 border rounded-lg ${
+                        hasError ? 'border-yellow-500 focus:ring-yellow-500' : 'border-gray-200 focus:ring-[#008545]'
+                      } focus:outline-none focus:ring-2`}
+                    />
+                    <div className="glow-button simple-glow">
+                      <Button
+                        onClick={handleAnswerSubmit}
+                        className="bg-[#00783E] hover:bg-[#006633] text-white text-sm px-4 py-2 rounded"
+                      >
+                        Check
+                      </Button>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <p className="text-green-600 font-medium">
-                  {shapeInfo[selectedShape].plural} have {shapeInfo[selectedShape].vertices} vertices.
+                  {shapeInfo[selectedShape].plural} have {shapeInfo[selectedShape].vertices} vertices!
                 </p>
               )}
             </div>
-            <p className="text-sm text-sky-600 text-center">
-              Drag to rotate the shape and click on the vertices to highlight them
-            </p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
